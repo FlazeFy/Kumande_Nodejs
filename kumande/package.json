@@ -12,7 +12,8 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "telegraf": "^4.16.3"
   },
   "devDependencies": {
     "cypress": "^13.8.1"

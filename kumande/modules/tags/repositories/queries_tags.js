@@ -7,7 +7,7 @@ const baseTable = 'tag'
 function getAllTags(req, res, ord, path, page, pageSize){
     // Query Builder
     const offset = (page - 1) * pageSize
-    const sqlStatement = "SELECT tag_slug, tag_name, t.created_at, u.username, COUNT(1) as total_used " +
+    const sqlStatement = "SELECT tag_slug, tag_name, t.created_at, u.username as created_by, COUNT(1) as total_used " +
         "FROM " + baseTable + " t " +
         "LEFT JOIN user u ON u.id = t.created_by " +
         "LEFT JOIN consume c ON JSON_CONTAINS(c.consume_tag, JSON_OBJECT('slug_name', t.tag_slug), '$') " +

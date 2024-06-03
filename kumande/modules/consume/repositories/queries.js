@@ -8,9 +8,10 @@ function getAllConsume(req, res, ord, path, page, pageSize){
     // Query Builder
     const offset = (page - 1) * pageSize
     const sqlStatement = `SELECT c.id, c.firebase_id, c.slug_name, consume_type, consume_name, consume_detail, consume_from, is_favorite, consume_tag, consume_comment, 
-        c.created_at, c.updated_at, c.deleted_at, u.username as created_by
+        payment_method, payment_price, c.created_at, c.updated_at, c.deleted_at, u.username as created_by
         FROM ${baseTable} c
         JOIN user u ON u.id = c.created_by
+        LEFT JOIN payment p ON p.consume_id = c.id
         ORDER BY c.created_at
         LIMIT ${pageSize} OFFSET ${offset}
         `
