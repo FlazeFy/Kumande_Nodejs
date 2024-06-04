@@ -1,5 +1,5 @@
 const connection = require('../../../configs/configs')
-const generateQueryMsg = require('../../../packages/helpers/generator')
+const { generateQueryMsg } = require('../../../packages/helpers/generator')
 const buildPaginationResponse = require('../../../packages/utils/pagination/services')
 
 const baseTable = 'tag'

@@ -7,6 +7,7 @@ const conf = JSON.parse(configFile)
 const { handleShowConsumeHistory } = require('./modules/consume')
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
+const { handleAllConsume } = require('./modules/document')
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -21,6 +22,7 @@ const menuOptions = [
     'Show tag',
     'Show stats',
     'Show my profile',
+    'Print Consume',
     'Change password'
 ];
 
@@ -74,7 +76,16 @@ bot.on('message', async (ctx) => {
             ctx.reply('Showing my profile...')
             break
         case 10:
-            ctx.reply('Preparing field...')
+            ctx.reply('Generate document...')
+            const [src_10, filename_10] = await handleAllConsume()
+            await ctx.replyWithDocument({
+                source: src_10,
+                filename: filename_10
+            });
+            fs.unlink(src_10, (err) => {
+                if (err) throw err;
+                console.log('Document was deleted')
+            });
             break
         default:
             ctx.reply('Please select a valid option from the menu.')
