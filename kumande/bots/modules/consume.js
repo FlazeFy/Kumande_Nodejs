@@ -34,6 +34,35 @@ async function handleShowConsumeHistory(page) {
     }
 }
 
+async function handleShowStats() {
+    try {
+        const stats_config = [
+            { url: 'http://127.0.0.1:9000/api/v1/stats/consume_type/desc', title:'Most Consume Type'},
+            { url: 'http://127.0.0.1:9000/api/v1/stats/consume_from/desc', title:'Most Consume From'},
+            { url: 'http://127.0.0.1:9000/api/v1/stats/consume_provide/desc', title:'Most Consume Provide'},
+            { url: 'http://127.0.0.1:9000/api/v1/stats/consume_main_ing/desc', title:'Most Consume Main Ingredient'},
+        ]
+
+        let res = ''
+        for (const conf of stats_config) {
+            const response = await axios.get(conf.url)
+            const data = response.data.data
+    
+            res += `<b>${conf.title}:</b>\n\n`
+            data.forEach((dt, i) => {
+                res+= `- ${dt.context} (${dt.total})\n`
+            })
+            res+= `\n`
+        }
+        
+        return res
+    } catch (err) {
+        console.error('Error fetching consume stats:', err)
+        return 'Error fetching consume stats:'+err
+    }
+}
+
 module.exports = {
-    handleShowConsumeHistory
+    handleShowConsumeHistory,
+    handleShowStats
 }

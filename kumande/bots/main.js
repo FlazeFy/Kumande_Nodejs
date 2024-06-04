@@ -4,7 +4,7 @@ const configFile = fs.readFileSync('../configs/telegram.json', 'utf8')
 const conf = JSON.parse(configFile)
 
 // Services
-const { handleShowConsumeHistory } = require('./modules/consume')
+const { handleShowConsumeHistory, handleShowStats } = require('./modules/consume')
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume, handleMySchedule } = require('./modules/document')
@@ -21,7 +21,7 @@ const menuOptions = [
     'Show schedule',
     'Edit schedule',
     'Show tag',
-    'Show stats',
+    'Show stats consume',
     'Show my profile',
     'Print Consume',
     'Print Schedule',
@@ -75,6 +75,8 @@ bot.on('message', async (ctx) => {
             break
         case 8:
             ctx.reply('Showing stats...')
+            const res_8 = await handleShowStats()
+            ctx.reply(res_8, { parse_mode: 'HTML' })
             break
         case 9:
             ctx.reply('Showing my profile...')
