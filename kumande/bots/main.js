@@ -6,6 +6,7 @@ const conf = JSON.parse(configFile)
 // Services
 const { handleShowConsumeHistory } = require('./modules/consume')
 const { generatePaginationBot } = require('../packages/helpers/generator')
+const { handleShowTag } = require('./modules/tag')
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -17,6 +18,7 @@ const menuOptions = [
     'Delete consume',
     'Show schedule',
     'Edit schedule',
+    'Show tag',
     'Show stats',
     'Show my profile',
     'Change password'
@@ -34,11 +36,11 @@ bot.on('message', async (ctx) => {
 
     switch (index) {
         case 0:
-            let page = 1
+            let page_0 = 1
             ctx.reply('Showing consume history...')
-            const [res, page_length] = await handleShowConsumeHistory(page)
-            ctx.reply(res, { parse_mode: 'HTML' })
-            generatePaginationBot(ctx, page, page_length)
+            const [res_0, page_length_0] = await handleShowConsumeHistory(page_0)
+            ctx.reply(res_0, { parse_mode: 'HTML' })
+            generatePaginationBot(ctx, page_0, page_length_0)
             break
         case 1:
             ctx.reply('Showing calorie needs...')
@@ -59,12 +61,19 @@ bot.on('message', async (ctx) => {
             ctx.reply('Preparing field...')
             break
         case 7:
-            ctx.reply('Showing stats...')
+            let page_7 = 1
+            ctx.reply('Showing tag...')
+            const [res_7, page_length_7] = await handleShowTag(page_7)
+            ctx.reply(res_7, { parse_mode: 'HTML' })
+            generatePaginationBot(ctx, page_7, page_length_7)
             break
         case 8:
-            ctx.reply('Showing my profile...')
+            ctx.reply('Showing stats...')
             break
         case 9:
+            ctx.reply('Showing my profile...')
+            break
+        case 10:
             ctx.reply('Preparing field...')
             break
         default:

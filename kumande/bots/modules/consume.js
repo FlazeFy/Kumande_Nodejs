@@ -13,7 +13,7 @@ async function handleShowConsumeHistory(page) {
             if (dt.consume_tag) {
                 const parsedTags = JSON.parse(dt.consume_tag)
                 if (Array.isArray(parsedTags)) {
-                    tags = parsedTags.map(tag => `#${tag.tag_name}`).join(', ')
+                    tags = parsedTags.map(tag => `#${tag.slug_name}`).join(', ')
                 }
             }
             
