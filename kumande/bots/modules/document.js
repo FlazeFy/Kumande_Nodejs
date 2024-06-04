@@ -1,6 +1,7 @@
 const axios = require('axios')
 const { convertPriceNumber, convertDateTime } = require('../../packages/helpers/ocnverter')
 const createCsvWriter = require('csv-writer').createObjectCsvWriter
+const puppeteer = require('puppeteer')
 
 async function handleAllConsume() {
     try {
@@ -64,6 +65,108 @@ async function handleAllConsume() {
     }
 }
 
+async function handleMySchedule() {
+    try {
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/schedule`)
+        let data = response.data.data
+        const date = new Date()
+        const path = `my_schedule_${date}.pdf`
+        const filename = `my_schedule_${date}.pdf`
+        const time = ["Breakfast","Lunch","Dinner"]
+
+        const browser = await puppeteer.launch()
+        const page = await browser.newPage()
+        let body = ''
+
+        function findInSchedule(day, time){
+            const res = data.find((el) => el.day == day && el.time == time)
+            return res ? res.schedule_consume : '-'
+        }
+
+        time.forEach((t, i) => {
+            body += `
+                <tr>
+                    <td style='font-weight: 600;'>${t}</td>
+                    <td>${findInSchedule('Mon', t)}</td>
+                    <td>${findInSchedule('Tue', t)}</td>
+                    <td>${findInSchedule('Wed', t)}</td>
+                    <td>${findInSchedule('Thu', t)}</td>
+                    <td>${findInSchedule('Fri', t)}</td>
+                    <td>${findInSchedule('Sat', t)}</td>
+                    <td>${findInSchedule('Sun', t)}</td>
+                </tr>
+            `
+        })
+
+        await page.setContent(`
+            <html>
+                <head>
+                    <title>My Schedule</title>
+                    <style>
+                        th, td{
+                            border: 1px solid black;
+                        }
+                        thead {
+                            font-size:15px;
+                        }
+                        tbody {
+                            font-size:12px;
+                        }
+                        tbody td {
+                            padding: 3px;
+                        }
+                        table {
+                            border-collapse: collapse;
+                            width:100%;
+                            text-align:center;
+                        }
+                        h6 {
+                            font-size:12.5px;
+                            margin:0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>Kumande</h1>
+                    <hr>
+                    <h2>My Schedule</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time / Day</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th>Saturday</th>
+                                <th>Sunday</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${body}
+                        </tbody>
+                    </table>
+                    <hr>
+                    <div style='font-size: 12px; font-style:italic;'>
+                        <p style='float:left;'>Kumande parts of FlazenApps</p>
+                        <p style='float:right;'>Generated at ${date} by ...</p>
+                    </div>
+                </body>
+            </html>
+        `);
+
+        await page.pdf({ path: path, format: 'A4', landscape:true})
+        await browser.close()
+        
+        return [path, filename]
+    } catch (err) {
+        console.error('Error fetching my schedule:', err)
+        return 'Error fetching my schedule:'+err
+    }
+}
+
 module.exports = {
-    handleAllConsume
+    handleAllConsume,
+    handleMySchedule
 }

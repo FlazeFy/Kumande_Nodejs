@@ -7,7 +7,7 @@ const conf = JSON.parse(configFile)
 const { handleShowConsumeHistory } = require('./modules/consume')
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
-const { handleAllConsume } = require('./modules/document')
+const { handleAllConsume, handleMySchedule } = require('./modules/document')
 const { handleShowSchedule } = require('./modules/schedule')
 
 const bot = new Telegraf(conf.TOKEN)
@@ -24,6 +24,7 @@ const menuOptions = [
     'Show stats',
     'Show my profile',
     'Print Consume',
+    'Print Schedule',
     'Change password'
 ];
 
@@ -86,6 +87,18 @@ bot.on('message', async (ctx) => {
                 filename: filename_10
             });
             fs.unlink(src_10, (err) => {
+                if (err) throw err;
+                console.log('Document was deleted')
+            });
+            break
+        case 11:
+            ctx.reply('Generate document...')
+            const [src_11, filename_11] = await handleMySchedule()
+            await ctx.replyWithDocument({
+                source: src_11,
+                filename: filename_11
+            });
+            fs.unlink(src_11, (err) => {
                 if (err) throw err;
                 console.log('Document was deleted')
             });
