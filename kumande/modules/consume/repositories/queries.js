@@ -72,6 +72,55 @@ function getAllConsume(req, res, ord, path, page, pageSize){
     })
 }
 
+function getDailyConsumeCal(req, res, month, year){
+    // Query Builder
+    const sqlStatement = `SELECT 
+        DAY(created_at) as context, SUM(REPLACE(JSON_EXTRACT(consume_detail, '$[0].calorie'), '\"', '')) as total 
+        FROM ${baseTable}
+        WHERE MONTH(created_at) = '${month}'
+        AND YEAR(created_at) = ${year}
+        GROUP BY 1
+        ORDER BY 2 DESC
+        `
+
+    connection.query(sqlStatement, (err, rows, fields) => {
+        if (err) {
+            res.status(500).send(err)
+        } else {
+            let obj = []
+            let max = new Date(year, month, 0).getDate()
+
+            for (let i = 1; i <= max; i++) {
+                let total = 0;
+
+                for (let dt of rows) {
+                    if (dt.context == i) {
+                        total = dt.total;
+                        break;
+                    }
+                }
+
+                obj.push({
+                    context: i.toString(),
+                    total: parseInt(total, 10)
+                });
+            }
+
+            let code = 200
+            if (rows.length == 0){
+                code = 404
+            }
+            
+            res.status(code).json({ 
+                message: generateQueryMsg(baseTable,rows.length), 
+                status: 200, 
+                data: obj
+            })
+        }
+    })
+}
+
 module.exports = {
-    getAllConsume
+    getAllConsume,
+    getDailyConsumeCal
 }
