@@ -8,6 +8,7 @@ const { handleShowConsumeHistory } = require('./modules/consume')
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume } = require('./modules/document')
+const { handleShowSchedule } = require('./modules/schedule')
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -58,6 +59,8 @@ bot.on('message', async (ctx) => {
             break
         case 5:
             ctx.reply('Showing schedule...')
+            const res_5 = await handleShowSchedule()
+            ctx.reply(res_5, { parse_mode: 'HTML' })
             break
         case 6:
             ctx.reply('Preparing field...')
