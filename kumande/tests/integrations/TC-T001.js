@@ -18,6 +18,20 @@ describe('Kumande Cases - TC-T001', () => {
             url: mainUrl + '?page=1',
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
+            const resultItem = dt.body.data
+            expect(resultItem).to.have.property('data')
+            const dataArr = resultItem.data
+            expect(dataArr).to.be.an('array')
+
+            const stringFields = ['tag_slug','tag_name','created_at']
+            const stringNullableFields = ['created_by']
+            const integerFields = ['total_used']
+
+            // Validate column
+            cy.templateValidateColumn(dataArr, stringFields, 'string', false)
+            cy.templateValidateColumn(dataArr, stringNullableFields, 'string', true)
+            cy.templateValidateColumn(dataArr, integerFields, 'number', false)
+
             cy.templatePagination(mainUrl, dt.body.data.last_page)
         })
     })

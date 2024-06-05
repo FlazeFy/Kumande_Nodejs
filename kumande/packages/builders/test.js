@@ -31,3 +31,24 @@ Cypress.Commands.add('templatePagination', (url, max) => {
         })
     }
 });
+
+Cypress.Commands.add('templateValidateColumn', (data, obj, dataType, nullable) => {
+    // Test
+    data.forEach((item) => {
+        expect(item).to.be.an('object')
+
+        obj.forEach((field) => {
+            expect(item).to.have.property(field)
+
+            if (nullable && item[field] === null) {
+                expect(item[field]).to.be.null
+            } else {
+                expect(item[field]).to.be.a(dataType)
+
+                if (dataType === "number") {
+                    expect(item[field] % 1).to.equal(0)
+                }
+            }
+        });
+    });
+});

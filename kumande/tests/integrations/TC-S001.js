@@ -17,6 +17,15 @@ describe('Kumande Cases - TC-S001', () => {
             url: mainUrl,
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
+            const resultItem = dt.body
+            expect(resultItem).to.have.property('data')
+            const dataArr = resultItem.data
+            expect(dataArr).to.be.an('array')
+
+            const stringFields = ['day','time','schedule_consume']
+
+            // Validate column
+            cy.templateValidateColumn(dataArr, stringFields, 'string', false)
         })
     })
 })
