@@ -21,10 +21,14 @@ describe('Kumande Cases - TC-S001', () => {
             expect(resultItem).to.have.property('data')
             const dataArr = resultItem.data
             expect(dataArr).to.be.an('array')
-
+            
+            const typeDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+            const typeTime = ['Breakfast','Lunch','Dinner']
             const stringFields = ['day','time','schedule_consume']
 
             // Validate column
+            cy.templateValidateContain(dataArr, typeDay, 'day')
+            cy.templateValidateContain(dataArr, typeTime, 'time')
             cy.templateValidateColumn(dataArr, stringFields, 'string', false)
         })
     })

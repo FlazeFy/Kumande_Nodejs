@@ -52,3 +52,11 @@ Cypress.Commands.add('templateValidateColumn', (data, obj, dataType, nullable) =
         });
     });
 });
+
+Cypress.Commands.add('templateValidateContain', (data, list, target) => {
+    // Test
+    data.forEach((item) => {
+        expect(item).to.be.an('object')
+        expect(list).to.include(item[target])
+    });
+});

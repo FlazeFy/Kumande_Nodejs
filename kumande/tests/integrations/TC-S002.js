@@ -11,6 +11,7 @@ describe('Kumande Cases - TC-S002', () => {
     const is_paginate = false
     const year = new Date().getFullYear()
     const month_number = new Date().getMonth()
+    const typeMonth = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
     function templateColumnValidateCases(resultItem){
         expect(resultItem).to.have.property('data')
@@ -43,6 +44,7 @@ describe('Kumande Cases - TC-S002', () => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body
             templateColumnValidateCases(resultItem)
+            cy.templateValidateContain(resultItem.data, typeMonth, 'context')
         })
     })
     it(methodCaseOne.toUpperCase() + ' - Get all budget in a year', () => {
@@ -53,6 +55,7 @@ describe('Kumande Cases - TC-S002', () => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body
             templateColumnValidateCases(resultItem)
+            cy.templateValidateContain(resultItem.data, typeMonth, 'context')
         })
     })
 })
