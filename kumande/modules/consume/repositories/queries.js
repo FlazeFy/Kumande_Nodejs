@@ -107,10 +107,6 @@ function getDailyConsumeCal(req, res, month, year){
             }
 
             let code = 200
-            if (rows.length == 0){
-                code = 404
-            }
-            
             res.status(code).json({ 
                 message: generateQueryMsg(baseTable,rows.length), 
                 status: 200, 

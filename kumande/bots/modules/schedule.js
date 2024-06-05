@@ -1,4 +1,5 @@
 const axios = require('axios')
+const { convertPriceNumber } = require('../../packages/helpers/ocnverter')
 
 async function handleShowSchedule() {
     try {
@@ -35,6 +36,43 @@ async function handleShowSchedule() {
     }
 }
 
+async function handleShowStatsMonthly() {
+    try {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+        const year = new Date().getFullYear()
+        const month_number = new Date().getMonth()
+        const month = months[month_number]
+
+        const stats_config = [
+            { url: `http://127.0.0.1:9000/api/v1/payment/budget/${year}`, title:`All Budget in ${year}`, unit:'price'},
+            { url: `http://127.0.0.1:9000/api/v1/payment/total/monthly/${year}`, title:`Total Spending ${year}`, unit:'price'},
+            { url: `http://127.0.0.1:9000/api/v1/consume/total/day/cal/month/${month_number+1}/year/${year}`, title:`Total Daily Cal ${month} ${year}`, unit:'cal'},
+        ]
+
+        let res = ''
+        for (const conf of stats_config) {
+            const response = await axios.get(conf.url)
+            const data = response.data.data
+    
+            res += `<b>${conf.title}:</b>\n\n`
+            data.forEach((dt, i) => {
+                if(conf.unit == 'price'){
+                    res+= `- ${dt.context} : Rp. ${dt.total ? convertPriceNumber(dt.total)+',00':'-'}\n`
+                } else if(conf.unit == 'cal'){
+                    res+= `- ${dt.context} : ${dt.total} Cal\n`
+                }
+            })
+            res+= `\n`
+        }
+        
+        return res
+    } catch (err) {
+        console.error('Error fetching consume stats:', err)
+        return 'Error fetching consume stats:'+err
+    }
+}
+
 module.exports = {
-    handleShowSchedule
+    handleShowSchedule,
+    handleShowStatsMonthly
 }

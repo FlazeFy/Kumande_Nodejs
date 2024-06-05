@@ -8,7 +8,7 @@ const { handleShowConsumeHistory, handleShowStats } = require('./modules/consume
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume, handleMySchedule } = require('./modules/document')
-const { handleShowSchedule } = require('./modules/schedule')
+const { handleShowSchedule, handleShowStatsMonthly } = require('./modules/schedule')
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -25,6 +25,7 @@ const menuOptions = [
     'Show my profile',
     'Print Consume',
     'Print Schedule',
+    'Show stats monthly',
     'Change password'
 ];
 
@@ -104,6 +105,11 @@ bot.on('message', async (ctx) => {
                 if (err) throw err;
                 console.log('Document was deleted')
             });
+            break
+        case 12:
+            ctx.reply('Showing stats...')
+            const res_12 = await handleShowStatsMonthly()
+            ctx.reply(res_12, { parse_mode: 'HTML' })
             break
         default:
             ctx.reply('Please select a valid option from the menu.')
