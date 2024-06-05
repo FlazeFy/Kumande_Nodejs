@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 
 function getRoute(){
+    const routerAuth = require('../modules/auth/http_handlers/http_handlers')
     const routerTag = require('../modules/tags/http_handlers/http_handlers')
     const routerConsume = require('../modules/consume/http_handlers/http_handlers')
     const routerSchedule = require('../modules/schedule/http_handlers/http_handlers')
@@ -9,6 +10,7 @@ function getRoute(){
     const routerPayment = require('../modules/payment/http_handlers/http_handlers')
     
     app.use(routerTag)
+    app.use(routerAuth)
     app.use(routerConsume)
     app.use(routerSchedule)
     app.use(routerStats)
