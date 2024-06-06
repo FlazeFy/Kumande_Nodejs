@@ -8,7 +8,7 @@ const { handleShowConsumeHistory, handleShowStats } = require('./modules/consume
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume, handleMySchedule } = require('./modules/document')
-const { handleShowSchedule, handleShowStatsMonthly } = require('./modules/schedule')
+const { handleShowSchedule, handleShowStatsMonthly, handleShowBodyInfo } = require('./modules/schedule')
 const { handleCheckAccount, handleLogin, handleUpdateTelegramId } = require('./modules/auth')
 
 const bot = new Telegraf(conf.TOKEN)
@@ -40,6 +40,7 @@ bot.start( async (ctx) => {
     const userId = ctx.from.id
     const [msg,is_login] = await handleCheckAccount(userId)
     if(is_login == true){
+        botState = 'logged_in'
         ctx.reply(msg, 
             Markup.keyboard(menuOptions.map(option => [option])).resize()
         );
@@ -88,7 +89,7 @@ bot.on('message', async (ctx) => {
             // check this
             ctx.reply(`Login Failed, ${loginResMsg}`)
         }
-    } else {
+    } else if (botState === 'logged_in' || menuOptions.includes(message)) {
         const index = menuOptions.indexOf(message)
 
         switch (index) {
@@ -101,6 +102,8 @@ bot.on('message', async (ctx) => {
                 break
             case 1:
                 ctx.reply('Showing calorie needs...')
+                const res_1 = await handleShowBodyInfo()
+                ctx.reply(res_1, { parse_mode: 'HTML' })
                 break
             case 2:
                 ctx.reply('Preparing field...')

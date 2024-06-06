@@ -1,5 +1,5 @@
 const axios = require('axios')
-const { convertPriceNumber } = require('../../packages/helpers/ocnverter')
+const { convertPriceNumber, convertDateTime } = require('../../packages/helpers/ocnverter')
 
 async function handleShowSchedule() {
     try {
@@ -33,6 +33,21 @@ async function handleShowSchedule() {
     } catch (err) {
         console.error('Error fetching schedule:', err)
         return 'Error fetching schedule:'+err
+    }
+}
+
+async function handleShowBodyInfo() {
+    try {
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/stats/count/calorie`)
+        const data = response.data.data
+
+        let res = 'My Body Info:\n\n'
+        res+= `Weight : ${data.weight} Kg\nHeight : ${data.height} Cm\nCalories / Day : ${data.result} Cal\nLast Updated : ${convertDateTime(data.created_at)}`
+
+        return res
+    } catch (err) {
+        console.error('Error fetching body info', err)
+        return 'Error fetching body info:'+err
     }
 }
 
@@ -74,5 +89,6 @@ async function handleShowStatsMonthly() {
 
 module.exports = {
     handleShowSchedule,
-    handleShowStatsMonthly
+    handleShowStatsMonthly,
+    handleShowBodyInfo
 }

@@ -57,7 +57,36 @@ function getTotalItemByContextObject(req, res, tableName, context, subcontext, o
     })
 }
 
+function getLastCountCalorie(req, res){
+    // Query Builder
+    const tableName = 'count_calorie'
+    const sqlStatement = `
+        SELECT weight, height, result, created_at
+        FROM ${tableName}
+        ORDER BY created_at DESC
+        LIMIT 1
+    `
+
+    connection.query(sqlStatement, (err, rows, fields) => {
+        if (err) {
+            res.status(500).send(err)
+        } else {
+            let code = 200
+
+            if (rows.length == 0){
+                code = 404
+            }
+            res.status(code).json({ 
+                message: generateQueryMsg(tableName,rows.length), 
+                status: 200, 
+                data: rows[0] 
+            })
+        }
+    })
+}
+
 module.exports = {
     getTotalItemByContext,
-    getTotalItemByContextObject
+    getTotalItemByContextObject,
+    getLastCountCalorie
 }

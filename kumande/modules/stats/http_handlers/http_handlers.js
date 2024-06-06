@@ -18,5 +18,8 @@ router.get('/api/v1/stats/consume_main_ing/:ord', (req, res) => {
     const ord = req.params.ord
     repoQueryTags.getTotalItemByContextObject(req, res, 'consume', 'consume_detail', 'main_ing', ord)
 })
+router.get('/api/v1/stats/count/calorie', (req, res) => {
+    repoQueryTags.getLastCountCalorie(req, res)
+})
 
 module.exports = router
