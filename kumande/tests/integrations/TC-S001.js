@@ -10,11 +10,15 @@ describe('Kumande Cases - TC-S001', () => {
     const methodCaseOne = 'get'
     const is_paginate = false
     const mainUrl = '/api/v1/schedule'
+    const userId = '2d98f524-de02-11ed-b5ea-0242ac120002'
 
     it(methodCaseOne.toUpperCase() + ' - Get my schedule', () => {
         cy.request({
             method: methodCaseOne, 
             url: mainUrl,
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body

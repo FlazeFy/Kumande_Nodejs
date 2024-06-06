@@ -11,6 +11,7 @@ describe('Kumande Cases - TC-C002', () => {
     const ord = 'desc'
     const is_paginate = false
     const mainUrl = '/api/v1/stats/'
+    const userId = '2d98f524-de02-11ed-b5ea-0242ac120002'
 
     function templateColumnValidateCases(resultItem){
         expect(resultItem).to.have.property('data')
@@ -29,6 +30,9 @@ describe('Kumande Cases - TC-C002', () => {
         cy.request({
             method: methodCaseOne, 
             url: mainUrl + 'consume_type/'+ord,
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body
@@ -39,6 +43,9 @@ describe('Kumande Cases - TC-C002', () => {
         cy.request({
             method: methodCaseOne, 
             url: mainUrl + 'consume_from/'+ord,
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body
@@ -49,6 +56,9 @@ describe('Kumande Cases - TC-C002', () => {
         cy.request({
             method: methodCaseOne, 
             url: mainUrl + 'consume_provide/'+ord,
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body
@@ -59,6 +69,9 @@ describe('Kumande Cases - TC-C002', () => {
         cy.request({
             method: methodCaseOne, 
             url: mainUrl + 'consume_main_ing/'+ord,
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body

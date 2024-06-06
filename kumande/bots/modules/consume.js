@@ -73,7 +73,25 @@ async function handleShowStats() {
     }
 }
 
+async function handleShowConsumeName(page) {
+    try {
+        const userId = await getSession('kumande_user_id')
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/consume_name?page=${page}`, {
+            headers: {
+                'X-Custom-Header': userId
+            }
+        })
+        const data = response.data.data.data
+        
+        return data
+    } catch (err) {
+        console.error('Error fetching consume stats:', err)
+        return 'Error fetching consume stats:'+err
+    }
+}
+
 module.exports = {
     handleShowConsumeHistory,
-    handleShowStats
+    handleShowStats,
+    handleShowConsumeName
 }

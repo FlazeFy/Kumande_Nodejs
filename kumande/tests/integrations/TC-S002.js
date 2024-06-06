@@ -12,6 +12,7 @@ describe('Kumande Cases - TC-S002', () => {
     const year = new Date().getFullYear()
     const month_number = new Date().getMonth()
     const typeMonth = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const userId = '2d98f524-de02-11ed-b5ea-0242ac120002'
 
     function templateColumnValidateCases(resultItem){
         expect(resultItem).to.have.property('data')
@@ -30,6 +31,9 @@ describe('Kumande Cases - TC-S002', () => {
         cy.request({
             method: methodCaseOne, 
             url: `/api/v1/consume/total/day/cal/month/${month_number}/year/${year}`,
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             const resultItem = dt.body

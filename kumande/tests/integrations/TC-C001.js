@@ -11,11 +11,15 @@ describe('Kumande Cases - TC-C001', () => {
     const ord = 'desc'
     const is_paginate = true
     const mainUrl = '/api/v1/consume/'+ord
+    const userId = '2d98f524-de02-11ed-b5ea-0242ac120002'
 
     it(methodCaseOne.toUpperCase() + ' - Get all consume', () => {
         cy.request({
             method: methodCaseOne, 
             url: mainUrl + '?page=1',
+            headers: {
+                'X-Custom-Header': userId
+            }
         }).then(dt => {
             cy.templateGet(dt, is_paginate)
             cy.templatePagination(mainUrl, dt.body.data.last_page)

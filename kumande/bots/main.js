@@ -4,13 +4,14 @@ const configFile = fs.readFileSync('../configs/telegram.json', 'utf8')
 const conf = JSON.parse(configFile)
 
 // Services
-const { handleShowConsumeHistory, handleShowStats } = require('./modules/consume')
+const { handleShowConsumeHistory, handleShowStats, handleShowConsumeName } = require('./modules/consume')
 const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume, handleMySchedule } = require('./modules/document')
 const { handleShowSchedule, handleShowStatsMonthly, handleShowBodyInfo } = require('./modules/schedule')
 const { handleCheckAccount, handleLogin, handleUpdateTelegramId } = require('./modules/auth')
 const { postSession, getSession } = require('../packages/helpers/session')
+const { convertDateTime } = require('../packages/helpers/ocnverter')
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -119,10 +120,26 @@ bot.on('message', async (ctx) => {
                 ctx.reply('Preparing field...')
                 break
             case 3:
+                let page_3 = 1
                 ctx.reply('Preparing field...')
+                const res_3 = await handleShowConsumeName(page_3)
+                const buttons_3 = res_3.map(dt => Markup.button.callback(`${dt.consume_name} at ${convertDateTime(dt.created_at)}`, dt.consume_name))
+                buttons_3.push(Markup.button.callback('Back', 'back_button'))
+                buttons_3.push(Markup.button.callback('Next Page', 'next_page'))
+                ctx.reply(`Please choose a consume in Menu to delete:`,
+                    Markup.inlineKeyboard(buttons_3, { columns: 1 })
+                )
                 break
             case 4:
+                let page_4 = 1
                 ctx.reply('Preparing field...')
+                const res_4 = await handleShowConsumeName(page_4)
+                const buttons_4 = res_4.map(dt => Markup.button.callback(`${dt.consume_name} at ${convertDateTime(dt.created_at)}`, dt.consume_name))
+                buttons_4.push(Markup.button.callback('Back', 'back_button'))
+                buttons_4.push(Markup.button.callback('Next Page', 'next_page'))
+                ctx.reply(`Please choose a consume in Menu to delete:`,
+                    Markup.inlineKeyboard(buttons_4, { columns: 1 })
+                )
                 break
             case 5:
                 ctx.reply('Showing schedule...')
