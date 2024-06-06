@@ -3,11 +3,12 @@ const { generateQueryMsg } = require('../../../packages/helpers/generator')
 
 const baseTable = 'payment'
 
-function getTotalSpendMonthly(req, res, year){
+function getTotalSpendMonthly(req, res, year, userId){
     // Query Builder
     const sqlStatement = `SELECT MONTH(created_at) as context, SUM(payment_price) as total 
         FROM ${baseTable} 
         WHERE YEAR(created_at) = ${year}
+        AND created_by = '${userId}'
         GROUP BY 1
         ORDER BY 1 ASC
         `
@@ -46,12 +47,13 @@ function getTotalSpendMonthly(req, res, year){
         }
     })
 }
-function getAllBudgetByYear(req, res, year){
+function getAllBudgetByYear(req, res, year, userId){
     // Query Builder
     const sqlStatement = `SELECT 
         REPLACE(JSON_EXTRACT(budget_month_year, '$[0].month'), '\"', '') as context, budget_total as total
         FROM budget
         WHERE REPLACE(JSON_EXTRACT(budget_month_year, '$[0].year'), '\"', '') = ${year}
+        AND created_by = '${userId}'
         `
 
     connection.query(sqlStatement, (err, rows, fields) => {

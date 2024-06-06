@@ -1,2 +1,3 @@
 /kumande/node_modules
 kumande/configs/telegram.json
+kumande/bots/telegraf-sessions.sqlite

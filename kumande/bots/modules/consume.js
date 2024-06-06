@@ -1,9 +1,15 @@
 const axios = require('axios')
 const { convertPriceNumber, convertDateTime } = require('../../packages/helpers/ocnverter')
+const { getSession } = require('../../packages/helpers/session')
 
 async function handleShowConsumeHistory(page) {
     try {
-        const response = await axios.get(`http://127.0.0.1:9000/api/v1/consume/desc?page=${page}`)
+        const userId = await getSession('kumande_user_id')
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/consume/desc?page=${page}`, {
+            headers: {
+                'X-Custom-Header': userId
+            }
+        })
         const data = response.data.data
         const page_length = data.last_page
 
@@ -36,6 +42,7 @@ async function handleShowConsumeHistory(page) {
 
 async function handleShowStats() {
     try {
+        const userId = await getSession('kumande_user_id')
         const stats_config = [
             { url: 'http://127.0.0.1:9000/api/v1/stats/consume_type/desc', title:'Most Consume Type'},
             { url: 'http://127.0.0.1:9000/api/v1/stats/consume_from/desc', title:'Most Consume From'},
@@ -45,7 +52,11 @@ async function handleShowStats() {
 
         let res = ''
         for (const conf of stats_config) {
-            const response = await axios.get(conf.url)
+            const response = await axios.get(conf.url, {
+                headers: {
+                    'X-Custom-Header': userId
+                }
+            })
             const data = response.data.data
     
             res += `<b>${conf.title}:</b>\n\n`

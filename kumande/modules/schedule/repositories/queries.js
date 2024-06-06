@@ -4,7 +4,7 @@ const { templateSelectObjectColumn } = require('../../../packages/helpers/templa
 
 const baseTable = 'schedule'
 
-function getMySchedule(req, res){
+function getMySchedule(req, res, userId){
     // Query Builder
     const daySelect = templateSelectObjectColumn('schedule_time','day','day')
     const timeSelect = templateSelectObjectColumn('schedule_time','category','time')
@@ -17,6 +17,7 @@ function getMySchedule(req, res){
             ${timeSelect},
                 schedule_consume
             FROM ${baseTable}
+            WHERE created_by = '${userId}'
         ) AS q
         GROUP BY 1, 2
         ORDER BY DAYNAME(1)`

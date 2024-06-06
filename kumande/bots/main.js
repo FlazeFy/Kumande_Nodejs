@@ -1,4 +1,4 @@
-const { Telegraf, Markup } = require('telegraf')
+const { Telegraf, Markup} = require('telegraf')
 const fs = require('fs')
 const configFile = fs.readFileSync('../configs/telegram.json', 'utf8')
 const conf = JSON.parse(configFile)
@@ -10,6 +10,7 @@ const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume, handleMySchedule } = require('./modules/document')
 const { handleShowSchedule, handleShowStatsMonthly, handleShowBodyInfo } = require('./modules/schedule')
 const { handleCheckAccount, handleLogin, handleUpdateTelegramId } = require('./modules/auth')
+const { postSession, getSession } = require('../packages/helpers/session')
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -38,10 +39,12 @@ const menuWelcome = [
 
 bot.start( async (ctx) => {
     const userId = ctx.from.id
-    const [msg,is_login] = await handleCheckAccount(userId)
+    const [msg,is_login,userAppId] = await handleCheckAccount(userId)
     if(is_login == true){
         botState = 'logged_in'
-        ctx.reply(msg, 
+        postSession('kumande_user_id',userAppId)
+        postSession('bot_state',botState)
+        ctx.reply(`${msg}\nPlease choose an option in Menu:`, 
             Markup.keyboard(menuOptions.map(option => [option])).resize()
         );
     } else {
@@ -57,6 +60,7 @@ bot.on('message', async (ctx) => {
         switch (message) {
             case 'Login':
                 botState = 'waiting_email'
+                postSession('bot_state',botState)
                 ctx.reply('Please enter your email:')
                 break;
             case 'Register':
@@ -75,6 +79,7 @@ bot.on('message', async (ctx) => {
     } else if (botState === 'waiting_email') {
         email = message
         botState = 'waiting_password'
+        postSession('bot_state',botState)
         ctx.reply('Please enter your password:')
     } else if (botState === 'waiting_password') {
         password = message
@@ -86,9 +91,14 @@ bot.on('message', async (ctx) => {
 
             ctx.reply(`Welcome to Kumande, ${username}`)
         } else {
-            // check this
             ctx.reply(`Login Failed, ${loginResMsg}`)
         }
+    } else if (message === 'Back to Main Menu') {
+        botState = 'logged_in'
+        postSession('bot_state',botState)
+        ctx.reply('Please choose an option in Menu:', 
+            Markup.keyboard(menuOptions.map(option => [option])).resize()
+        );
     } else if (botState === 'logged_in' || menuOptions.includes(message)) {
         const index = menuOptions.indexOf(message)
 

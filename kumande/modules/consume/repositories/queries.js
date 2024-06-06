@@ -4,7 +4,7 @@ const buildPaginationResponse = require('../../../packages/utils/pagination/serv
 
 const baseTable = 'consume'
 
-function getAllConsume(req, res, ord, path, page, pageSize){
+function getAllConsume(req, res, ord, path, page, pageSize, userId){
     // Query Builder
     let pagination_script = ''
     if(page != "all"){
@@ -18,6 +18,7 @@ function getAllConsume(req, res, ord, path, page, pageSize){
         FROM ${baseTable} c
         JOIN user u ON u.id = c.created_by
         LEFT JOIN payment p ON p.consume_id = c.id
+        WHERE c.created_by = '${userId}'
         ORDER BY c.created_at
         ${pagination_script}
         `
@@ -72,12 +73,13 @@ function getAllConsume(req, res, ord, path, page, pageSize){
     })
 }
 
-function getDailyConsumeCal(req, res, month, year){
+function getDailyConsumeCal(req, res, month, year, userId){
     // Query Builder
     const sqlStatement = `SELECT 
         DAY(created_at) as context, SUM(REPLACE(JSON_EXTRACT(consume_detail, '$[0].calorie'), '\"', '')) as total 
         FROM ${baseTable}
         WHERE MONTH(created_at) = '${month}'
+        AND created_by = '${userId}'
         AND YEAR(created_at) = ${year}
         GROUP BY 1
         ORDER BY 2 DESC

@@ -1,9 +1,15 @@
 const axios = require('axios')
 const { convertPriceNumber, convertDateTime } = require('../../packages/helpers/ocnverter')
+const { getSession } = require('../../packages/helpers/session')
 
 async function handleShowSchedule() {
     try {
-        const response = await axios.get(`http://127.0.0.1:9000/api/v1/schedule`)
+        const userId = await getSession('kumande_user_id')
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/schedule`, {
+            headers: {
+                'X-Custom-Header': userId
+            }
+        })
         const data = response.data
         const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
         const time = ["Breakfast","Lunch","Dinner"]
@@ -38,7 +44,12 @@ async function handleShowSchedule() {
 
 async function handleShowBodyInfo() {
     try {
-        const response = await axios.get(`http://127.0.0.1:9000/api/v1/stats/count/calorie`)
+        const userId = await getSession('kumande_user_id')
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/stats/count/calorie`, {
+            headers: {
+                'X-Custom-Header': userId
+            }
+        })
         const data = response.data.data
 
         let res = 'My Body Info:\n\n'
@@ -57,6 +68,7 @@ async function handleShowStatsMonthly() {
         const year = new Date().getFullYear()
         const month_number = new Date().getMonth()
         const month = months[month_number]
+        const userId = await getSession('kumande_user_id')
 
         const stats_config = [
             { url: `http://127.0.0.1:9000/api/v1/payment/budget/${year}`, title:`All Budget in ${year}`, unit:'price'},
@@ -66,7 +78,11 @@ async function handleShowStatsMonthly() {
 
         let res = ''
         for (const conf of stats_config) {
-            const response = await axios.get(conf.url)
+            const response = await axios.get(conf.url, {
+                headers: {
+                    'X-Custom-Header': userId
+                }
+            })
             const data = response.data.data
     
             res += `<b>${conf.title}:</b>\n\n`

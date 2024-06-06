@@ -2,10 +2,16 @@ const axios = require('axios')
 const { convertPriceNumber, convertDateTime } = require('../../packages/helpers/ocnverter')
 const createCsvWriter = require('csv-writer').createObjectCsvWriter
 const puppeteer = require('puppeteer')
+const { getSession } = require('../../packages/helpers/session')
 
 async function handleAllConsume() {
     try {
-        const response = await axios.get(`http://127.0.0.1:9000/api/v1/consume/desc?page=all`)
+        const userId = await getSession('kumande_user_id')
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/consume/desc?page=all`, {
+            headers: {
+                'X-Custom-Header': userId
+            }
+        })
         const data = response.data
         const rows = []
         const date = new Date()
@@ -67,7 +73,12 @@ async function handleAllConsume() {
 
 async function handleMySchedule() {
     try {
-        const response = await axios.get(`http://127.0.0.1:9000/api/v1/schedule`)
+        const userId = await getSession('kumande_user_id')
+        const response = await axios.get(`http://127.0.0.1:9000/api/v1/schedule`, {
+            headers: {
+                'X-Custom-Header': userId
+            }
+        })
         let data = response.data.data
         const date = new Date()
         const path = `my_schedule_${date}.pdf`

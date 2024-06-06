@@ -7,11 +7,13 @@ async function handleCheckAccount(id) {
         const message = response.data.message
 
         let is_login = false
+        let userId = null
         if(status == 200){
             is_login = true
+            userId = response.data.data
         }
 
-        return [message, is_login]
+        return [message, is_login, userId]
     } catch (err) {
         console.error('Error fetching consume stats:', err)
         return 'Error fetching consume stats:'+err
