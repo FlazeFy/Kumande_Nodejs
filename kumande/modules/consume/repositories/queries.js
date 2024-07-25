@@ -1,8 +1,10 @@
 const connection = require('../../../configs/configs')
-const { generateQueryMsg } = require('../../../packages/helpers/generator')
+const { generateQueryMsg, generateTranslate } = require('../../../packages/helpers/generator')
 const buildPaginationResponse = require('../../../packages/utils/pagination/services')
-
+const Sentiment = require('sentiment')
+const sentiment = new Sentiment()
 const baseTable = 'consume'
+const { promisify } = require('util')
 
 function getAllConsume(req, res, ord, path, page, pageSize, userId){
     // Query Builder
@@ -20,7 +22,7 @@ function getAllConsume(req, res, ord, path, page, pageSize, userId){
         LEFT JOIN payment p ON p.consume_id = c.id
         WHERE c.created_by = '${userId}'
         AND c.deleted_at is null
-        ORDER BY c.created_at
+        ORDER BY c.created_at DESC
         ${pagination_script}
         `
 
@@ -187,8 +189,50 @@ function getAllConsumeName(req, res, path, page, pageSize, userId){
     })
 }
 
+async function getAnalyzeConsumeComment(req, res, userId){
+    const queryAsync = promisify(connection.query).bind(connection)
+
+    // Query Builder
+    const sqlStatement = `SELECT 
+        consume_name, consume_type, consume_comment, is_favorite
+        FROM ${baseTable}
+        WHERE consume_comment is not null
+        AND created_by = '${userId}'
+        `
+
+    try {
+        const rows = await queryAsync(sqlStatement)
+        
+        const obj = await Promise.all(rows.map(async (dt) => {
+            const en_comment = await generateTranslate(dt.consume_comment)
+            const analyze_comment = sentiment.analyze(en_comment)
+
+            return {
+                consume_name: dt.consume_name,
+                consume_type: dt.consume_type,
+                consume_comment: dt.consume_comment,
+                en_consume_comment: en_comment,
+                is_favorite: dt.is_favorite,
+                score: analyze_comment.score
+            }
+        }))
+
+        const sortedObj = obj.sort((a, b) => b.score - a.score)
+
+        const code = 200
+        res.status(code).json({ 
+            message: generateQueryMsg(baseTable, rows.length), 
+            status: code, 
+            data: sortedObj 
+        })
+    } catch (err) {
+        res.status(500).send(err)
+    }
+}
+
 module.exports = {
     getAllConsume,
     getDailyConsumeCal,
-    getAllConsumeName
+    getAllConsumeName,
+    getAnalyzeConsumeComment
 }

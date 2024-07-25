@@ -1,4 +1,5 @@
 const { Markup } = require('telegraf')
+const translate = require('translate-google-api')
 
 function generateQueryMsg(ctx, total) {
     ctx = ctx.charAt(0).toUpperCase() + ctx.slice(1)
@@ -22,7 +23,17 @@ function generatePaginationBot(ctx, current, length){
     )
 }
 
+async function generateTranslate(text, targetLan) {
+    try {
+        const translatedText = await translate(text, { to: targetLan})
+        return translatedText.join(' ')
+    } catch (err) {
+        console.error('Error translating text:', err)
+    }
+}
+
 module.exports = {
     generateQueryMsg,
-    generatePaginationBot
+    generatePaginationBot,
+    generateTranslate
 }

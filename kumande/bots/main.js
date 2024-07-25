@@ -14,31 +14,34 @@ const { handleShowSchedule, handleShowStatsMonthly, handleShowBodyInfo } = requi
 const { handleCheckAccount, handleLogin, handleUpdateTelegramId } = require('./modules/auth')
 const { postSession, getSession } = require('../packages/helpers/session')
 const { convertDateTime } = require('../packages/helpers/ocnverter')
-const { analyzePhoto } = require('./image_processing/load')
+const { analyzePhoto } = require('./image_processing/load');
+const { ai_command } = require('./ai');
+const { text } = require('stream/consumers');
 
 const bot = new Telegraf(conf.TOKEN)
 
 const menuOptions = [
-    'Show consume history',
-    'Show my calorie needs',
-    'Add consume',
-    'Update consume',
-    'Delete consume',
-    'Show schedule',
-    'Edit schedule',
-    'Show tag',
-    'Show stats consume',
-    'Show my profile',
-    'Print Consume',
-    'Print Schedule',
-    'Show stats monthly',
-    'Change password'
+    '/Show consume history',
+    '/Show my calorie needs',
+    '/Add consume',
+    '/Update consume',
+    '/Delete consume',
+    '/Show schedule',
+    '/Edit schedule',
+    '/Show tag',
+    '/Show stats consume',
+    '/Show my profile',
+    '/Print Consume',
+    '/Print Schedule',
+    '/Show stats monthly',
+    '/Analyze History',
+    '/Change password'
 ];
 const menuWelcome = [
-    'Login',
-    'Register',
-    'Feedback',
-    'Change password'
+    '/Login',
+    '/Register',
+    '/Feedback',
+    '/Change password'
 ];
 
 bot.start( async (ctx) => {
@@ -66,18 +69,18 @@ bot.on('message', async (ctx) => {
 
         if (menuWelcome.includes(message)) {
             switch (message) {
-                case 'Login':
+                case '/Login':
                     botState = 'waiting_email'
                     postSession('bot_state',botState)
                     ctx.reply('Please enter your email:')
                     break;
-                case 'Register':
+                case '/Register':
                     ctx.reply('Preparing fields..')
                     break;
-                case 'Feedback':
+                case '/Feedback':
                     ctx.reply('Preparing fields..')
                     break;
-                case 'Change password':
+                case '/Change password':
                     ctx.reply('Preparing fields..')
                     break;
                 default:
@@ -201,7 +204,7 @@ bot.on('message', async (ctx) => {
                     ctx.reply(res_12, { parse_mode: 'HTML' })
                     break
                 default:
-                    ctx.reply('Please select a valid option from the menu.')
+                    ai_command(message,ctx)
                     break
             }
         }

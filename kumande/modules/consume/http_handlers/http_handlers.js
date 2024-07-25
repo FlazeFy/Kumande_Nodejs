@@ -18,6 +18,11 @@ router.get('/api/v1/consume_name', (req, res) => {
 
     repoQueryConsume.getAllConsumeName(req, res, '/api/v1/consume_name', page, pageSize, userId)
 })
+router.get('/api/v1/consume/analyze/comment', (req, res) => {
+    const userId = req.headers['x-custom-header']
+
+    repoQueryConsume.getAnalyzeConsumeComment(req, res, userId)
+})
 router.get('/api/v1/consume/total/day/cal/month/:month/year/:year', (req, res) => {
     const month = req.params.month
     const year = req.params.year

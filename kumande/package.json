@@ -20,14 +20,19 @@
     "firebase": "^10.12.4",
     "firebase-admin": "^12.2.0",
     "fs": "^0.0.1-security",
+    "install": "^0.13.0",
     "jimp": "^0.22.12",
     "kysely": "^0.27.3",
     "mysql": "^2.18.1",
+    "natural": "^7.1.0",
+    "npm": "^10.8.2",
     "or": "^0.2.0",
     "puppeteer": "^22.10.0",
+    "sentiment": "^5.0.2",
     "telegraf": "^4.16.3",
     "telegraf-experiments": "^1.1.0",
-    "tesseract.js": "^5.1.0"
+    "tesseract.js": "^5.1.0",
+    "translate-google-api": "^1.0.4"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.10",
