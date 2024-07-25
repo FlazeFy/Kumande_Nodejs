@@ -2,3 +2,5 @@
 kumande/configs/telegram.json
 kumande/bots/telegraf-sessions.sqlite
 kumande/configs/firebase.js
+*.traineddata
+kumande/configs/kumande-64a66-firebase-adminsdk-maclr-efd41385aa.json
