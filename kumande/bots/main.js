@@ -59,6 +59,8 @@ bot.start( async (ctx) => {
 });
 
 bot.on('message', async (ctx) => {
+    const telegramId = ctx.from.id
+
     if (ctx.message.text) {
         const message = ctx.message.text
 
@@ -204,9 +206,9 @@ bot.on('message', async (ctx) => {
             }
         }
     } else if(ctx.message.photo){
-        const photo = ctx.message.photo[ctx.message.photo.length - 1];
-        const fileId = photo.file_id;
-        const photoPath = path.join(__dirname, `received_photo_${ctx.message.message_id}.jpg`);
+        const photo = ctx.message.photo[ctx.message.photo.length - 1]
+        const fileId = photo.file_id
+        const photoPath = path.join(__dirname, `received_photo_${ctx.message.message_id}.jpg`)
 
         try {
             const fileLink = await ctx.telegram.getFileLink(fileId)
@@ -218,9 +220,9 @@ bot.on('message', async (ctx) => {
             await new Promise((resolve, reject) => {
                 writer.on('finish', resolve)
                 writer.on('error', reject)
-            });
+            })
 
-            const res = await analyzePhoto(photoPath)
+            const res = await analyzePhoto(photoPath,telegramId)
             await ctx.replyWithHTML(`Photo successfully analyzed...\n\n${res}`)
         } catch (error) {
             await ctx.reply(`Failed to analyze the photo: ${error.message}`)
