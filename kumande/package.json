@@ -28,11 +28,14 @@
     "npm": "^10.8.2",
     "or": "^0.2.0",
     "puppeteer": "^22.10.0",
+    "qrcode": "^1.5.3",
+    "qrcode-reader": "^1.0.4",
     "sentiment": "^5.0.2",
     "telegraf": "^4.16.3",
     "telegraf-experiments": "^1.1.0",
     "tesseract.js": "^5.1.0",
-    "translate-google-api": "^1.0.4"
+    "translate-google-api": "^1.0.4",
+    "url-regex": "^5.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.10",

@@ -1,3 +1,6 @@
+const Jimp = require('jimp')
+const QrCode = require('qrcode-reader')
+
 function convertPriceNumber(n) {
     const inStr = n.toString()
     let res = ''
@@ -25,7 +28,27 @@ function convertDateTime(val) {
     return res
 }
 
+async function decodeQRCode(imagePath) {
+    try {
+        const image = await Jimp.read(imagePath)
+        const qr = new QrCode()
+
+        return new Promise((resolve, reject) => {
+            qr.callback = (err, value) => {
+                if (err || !value) {
+                    return resolve(false)
+                }
+                resolve(value.result)
+            };
+            qr.decode(image.bitmap)
+        });
+    } catch (err) {
+        return false
+    }
+}
+
 module.exports = {
     convertPriceNumber,
-    convertDateTime
+    convertDateTime,
+    decodeQRCode
 }

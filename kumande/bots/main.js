@@ -11,9 +11,9 @@ const { generatePaginationBot } = require('../packages/helpers/generator')
 const { handleShowTag } = require('./modules/tag')
 const { handleAllConsume, handleMySchedule } = require('./modules/document')
 const { handleShowSchedule, handleShowStatsMonthly, handleShowBodyInfo } = require('./modules/schedule')
-const { handleCheckAccount, handleLogin, handleUpdateTelegramId } = require('./modules/auth')
+const { handleCheckAccount, handleLogin, handleUpdateTelegramId, handleCheckAccountId, handleUpdateTelegramIdQRCode } = require('./modules/auth')
 const { postSession, getSession } = require('../packages/helpers/session')
-const { convertDateTime } = require('../packages/helpers/ocnverter')
+const { convertDateTime, decodeQRCode } = require('../packages/helpers/ocnverter')
 const { analyzePhoto } = require('./image_processing/load');
 const { ai_command } = require('./ai');
 const { text } = require('stream/consumers');
@@ -63,6 +63,17 @@ bot.start( async (ctx) => {
 
 bot.on('message', async (ctx) => {
     const telegramId = ctx.from.id
+    if(typeof botState === 'undefined'){
+        const [msg,is_login,userAppId] = await handleCheckAccount(telegramId)
+        if(is_login == true){
+            botState = 'logged_in'
+            postSession('kumande_user_id',userAppId)
+            postSession('bot_state',botState)
+            ctx.reply(`${msg}\nPlease choose an option in Menu:`, 
+                Markup.keyboard(menuOptions.map(option => [option])).resize()
+            );
+        }
+    } 
 
     if (ctx.message.text) {
         const message = ctx.message.text
@@ -97,10 +108,15 @@ bot.on('message', async (ctx) => {
             const [loginResMsg, loginResIdUser, loginResStatus, username, tokenLogin] = await handleLogin(email, password)
 
             if(loginResStatus == 200){
-                const userId = ctx.from.id
-                await handleUpdateTelegramId(userId, tokenLogin)
+                await handleUpdateTelegramId(telegramId, tokenLogin)
 
                 ctx.reply(`Welcome to Kumande, ${username}`)
+                botState = 'logged_in'
+                postSession('kumande_user_id',loginResIdUser)
+                postSession('bot_state',botState)
+                ctx.reply(`${loginResMsg}\nPlease choose an option in Menu:`, 
+                    Markup.keyboard(menuOptions.map(option => [option])).resize()
+                );
             } else {
                 ctx.reply(`Login Failed, ${loginResMsg}`)
             }
@@ -215,7 +231,7 @@ bot.on('message', async (ctx) => {
 
         try {
             const fileLink = await ctx.telegram.getFileLink(fileId)
-            const response = await axios.get(fileLink, { responseType: 'stream' })
+            const response = await axios.get(fileLink.toString(), { responseType: 'stream' })
 
             const writer = fs.createWriteStream(photoPath)
             response.data.pipe(writer)
@@ -225,8 +241,37 @@ bot.on('message', async (ctx) => {
                 writer.on('error', reject)
             })
 
-            const res = await analyzePhoto(photoPath,telegramId)
-            await ctx.replyWithHTML(`Photo successfully analyzed...\n\n${res}`)
+            const qrContent = await decodeQRCode(photoPath)
+
+            if (qrContent) {
+                if(qrContent.length == 36){ // Check QR code value is valid acc ID        
+                    await ctx.replyWithHTML(`QR Code Sign In : QR Code Valid!`)
+
+                    const update_tele = await handleUpdateTelegramIdQRCode(telegramId, qrContent) // Update tele id without token 
+                    if(update_tele){
+                        const [msg,is_login,userAppId] = await handleCheckAccountId(qrContent) // Get username after success update tele id
+
+                        if(is_login){
+                            botState = 'logged_in'
+                            postSession('kumande_user_id',userAppId)
+                            postSession('bot_state',botState)
+                            await ctx.replyWithHTML(`QR Code Sign In : Success, ${msg}!`)
+                            ctx.reply(`${msg}\nPlease choose an option in Menu:`, 
+                                Markup.keyboard(menuOptions.map(option => [option])).resize()
+                            );
+                        } else {
+                            await ctx.replyWithHTML(`QR Code Sign In : Account Not Found!`)
+                        }
+                    } else {
+                        await ctx.replyWithHTML(`QR Code Sign In : Failed!`)
+                    }
+                } else {
+                    await ctx.replyWithHTML(`QR Code Sign In : Not Valid!`)
+                }
+            } else {
+                const res = await analyzePhoto(photoPath, ctx.from.id)
+                await ctx.replyWithHTML(`Photo successfully analyzed...\n\n${res}`)
+            }
         } catch (error) {
             await ctx.reply(`Failed to analyze the photo: ${error.message}`)
         } finally {
