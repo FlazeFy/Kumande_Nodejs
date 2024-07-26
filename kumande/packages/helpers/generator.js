@@ -32,8 +32,15 @@ async function generateTranslate(text, targetLan) {
     }
 }
 
+function getMonthName (val) {
+    const month_name = ['January','February','March','April','May','June','July','August','September','October','November','December']
+    const res = month_name[val]
+    return res
+}
+
 module.exports = {
     generateQueryMsg,
     generatePaginationBot,
-    generateTranslate
+    generateTranslate,
+    getMonthName
 }

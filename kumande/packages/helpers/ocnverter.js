@@ -47,8 +47,29 @@ async function decodeQRCode(imagePath) {
     }
 }
 
+function calculateDistance(lat1, lon1, lat2, lon2, unit = 'km') {
+    const toRad = angle => (angle * Math.PI) / 180
+
+    const theta = lon1 - lon2
+    let distance = Math.sin(toRad(lat1)) * Math.sin(toRad(lat2)) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(theta))
+    
+    distance = Math.acos(distance)
+    distance = (distance * 180) / Math.PI
+    distance = distance * 60 * 1.1515
+
+    if (unit === 'km') {
+        distance = distance * 1.609344
+    }
+
+    distance = parseFloat(distance.toFixed(2))
+
+    return distance
+}
+
+
 module.exports = {
     convertPriceNumber,
     convertDateTime,
+    calculateDistance,
     decodeQRCode
 }
