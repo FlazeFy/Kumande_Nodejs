@@ -29,7 +29,7 @@ describe('Kumande Cases - TC-C002', () => {
     it(methodCaseOne.toUpperCase() + ' - Get total consume by type', () => {
         cy.request({
             method: methodCaseOne, 
-            url: mainUrl + 'consume_type/'+ord,
+            url: mainUrl + 'consume_type',
             headers: {
                 'X-Custom-Header': userId
             }
@@ -42,7 +42,7 @@ describe('Kumande Cases - TC-C002', () => {
     it(methodCaseOne.toUpperCase() + ' - Get total consume by from', () => {
         cy.request({
             method: methodCaseOne, 
-            url: mainUrl + 'consume_from/'+ord,
+            url: mainUrl + 'consume_from',
             headers: {
                 'X-Custom-Header': userId
             }
@@ -55,7 +55,7 @@ describe('Kumande Cases - TC-C002', () => {
     it(methodCaseOne.toUpperCase() + ' - Get total consume by provide', () => {
         cy.request({
             method: methodCaseOne, 
-            url: mainUrl + 'consume_provide/'+ord,
+            url: mainUrl + 'consume_provide',
             headers: {
                 'X-Custom-Header': userId
             }
@@ -68,7 +68,7 @@ describe('Kumande Cases - TC-C002', () => {
     it(methodCaseOne.toUpperCase() + ' - Get total consume by main ingredient', () => {
         cy.request({
             method: methodCaseOne, 
-            url: mainUrl + 'consume_main_ing/'+ord,
+            url: mainUrl + 'consume_main_ing',
             headers: {
                 'X-Custom-Header': userId
             }
