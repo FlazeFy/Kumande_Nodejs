@@ -5,6 +5,7 @@ const port = process.env.PORT || 9000
 const bodyParser = require('body-parser')
 const { swaggerUi, specs } = require('./docs/swagger');
 
+app.use(cors())
 app.use(bodyParser.json()) 
 
 // Route 
@@ -15,7 +16,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use(routeCollection)
 
-app.use(cors())
+
 // app.use(express.json())
 app.listen(port, () => {
     console.log('Kumande BE Admin is running')

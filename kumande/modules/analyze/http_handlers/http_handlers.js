@@ -35,4 +35,26 @@ router.post('/api/v1/analyze/next_consume', (req, res) => {
     repoQueryAnalyze.getAnalyzeConsume(req, res, userId, lat, long, date)
 })
 
+/**
+ * @swagger
+ * /api/v1/analyze/consume_data/consume_body_relation:
+ *   get:
+ *     summary: Give analyze for food data to user my body data relation
+ *     tags: [Analyze]
+ *     responses:
+ *       200:
+ *         description: Consume found
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+// Get Consume - my body relation
+router.post('/api/v1/analyze/consume_data/consume_body_relation', (req, res) => {
+    const userId = req.headers['x-custom-header']
+    const blood_pressure = req.body.blood_pressure
+
+    repoQueryAnalyze.getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure)
+})
+
 module.exports = router
