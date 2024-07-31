@@ -5,7 +5,7 @@ const fs = require('fs')
 const csv = require('csv-parser')
 const { templateSelectObjectColumn } = require('../../../packages/helpers/template')
 const { calculateDistance } = require('../../../packages/helpers/ocnverter')
-const { getStatusSodium, getStatusSugar } = require('../../../packages/utils/business/analyze')
+const { getStatusSodium, getStatusSugar, getStatusCarbohydrates, getStatusDietaryFiber, getStatusSaturatedFats } = require('../../../packages/utils/business/analyze')
 
 function getAnalyzeConsume(req, res, userId, lat, long, date){
     // Query CSV
@@ -157,7 +157,7 @@ function getAnalyzeConsume(req, res, userId, lat, long, date){
     }
 }
 
-function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose, calorieDaily, weight, height, date){
+function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose, calorieDaily, weight, height, date, gout){
     // Query CSV
     try {
         const csvFilePath = './docs/Kumande Asset - Food.csv'
@@ -222,11 +222,25 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                     blood_glucose >= 100 ? 'Prediabetes' :
                     blood_glucose >= 70 ? 'Normal' :
                         'Low'
+
+                    // Gout Status : Fasting (Source : https://www.medicalnewstoday.com/articles/uric-acid-level)
+                    const gout_status = 
+                        gender == 'male' ?
+                        gout > 7.0 ? 'High' :
+                            gout >= 2.5 ? 'Normal' :
+                            'Low'
+                    : gender == 'female' ?
+                        gout > 6.0 ? 'High' :
+                        gout >= 1.5 ? 'Normal' :
+                        'Low' : ''
                     
                     let cellFoodValues = []
                     let cellCalValues = []
                     let cellSodiumValues = []
                     let cellSugarValues = []
+                    let cellCarbohydrateValues = []
+                    let cellDietaryFiberValues = []
+                    let cellDietarySaturatedFats = []
 
                     fs.createReadStream(csvFilePath).pipe(csv())
                     .on('data', (row) => {
@@ -234,6 +248,9 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                         cellCalValues.push(row['calorie'])
                         cellSodiumValues.push(row['sodium'])
                         cellSugarValues.push(row['sugar'])
+                        cellCarbohydrateValues.push(row['carbohydrates'])
+                        cellDietaryFiberValues.push(row['dietary_fiber'])
+                        cellDietarySaturatedFats.push(row['saturated_fats'])
                     })
                     .on('end', () => {
                         connection.query(sqlConsume, (err, rows, fields) => {
@@ -284,6 +301,16 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                                                 param_sugar = 'So you can consume whatever the sugar level is. We suggest you sometimes consume high value sugar to make sure your sugar level is not below the lowest parameter'
                                             }
 
+                                            // Gout exception food
+                                            let exception_saturated_fats_status = []
+                                            let param_saturated_fats = ''
+                                            if(gout_status == "High" || gout_status == "Pre-High"){
+                                                exception_gout_status = ['Very Low','Low']
+                                                param_saturated_fats = 'We suggest you to consume food where the saturated fats is below 5 g mg per 100 g'
+                                            } else {
+                                                param_saturated_fats = 'So you can consume whatever the saturated fats level is. We suggest you sometimes consume high value saturated fats to make sure your gout level is not below the lowest parameter'
+                                            }
+
                                             // Food allowed passed calorie based on BMI status
                                             let is_calorie_over
                                             if(bmi_status == 'Overweight' || bmi_status == 'Obesity'){
@@ -299,13 +326,19 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                                                 sodium: parseFloat(cellSodiumValues[index]),
                                                 sodium_status: getStatusSodium(parseFloat(cellSodiumValues[index])),
                                                 sugar: parseFloat(cellSugarValues[index]),
-                                                sugar_status: getStatusSugar(parseFloat(cellSugarValues[index]))
+                                                sugar_status: getStatusSugar(parseFloat(cellSugarValues[index])),
+                                                carbohydrate: parseFloat(cellCarbohydrateValues[index]),
+                                                carbohydrate_status: getStatusCarbohydrates(parseFloat(cellCarbohydrateValues[index])),
+                                                dietary_fiber: parseFloat(cellDietaryFiberValues[index]),
+                                                dietary_fiber_status: getStatusDietaryFiber(parseFloat(cellDietaryFiberValues[index])),
+                                                saturated_fats: parseFloat(cellDietarySaturatedFats[index]),
+                                                saturated_fats_status: getStatusSaturatedFats(parseFloat(cellDietarySaturatedFats[index]))
                                             })).filter(item => 
                                                 !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
                                             )
 
+                                            // Calorie measure
                                             let filteredCalorie = filteredAllergic
-                                            
                                             if(is_calorie_over){
                                                 filteredCalorie = filteredCalorie.sort((a, b) => b.calorie - a.calorie)
                                             } else {
@@ -316,21 +349,34 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                                             let filteredCalorieDaily = filteredCalorie.filter(item => 
                                                     item.calorie < (calorieDaily - totalConsumedCalorie))
 
+                                            // Analyze for blood preasure
                                             const results_dataset_blood_preasure = filteredCalorieDaily.filter(item => 
                                                 exception_sodium_status.includes(item.sodium_status))
-                                                .map(({ sugar, sugar_status, ...rest }) => rest)
+                                                .map(({ sugar, sugar_status, carbohydrate, carbohydrate_status, dietary_fiber, dietary_fiber_status, saturated_fats, saturated_fats_status, ...rest }) => rest)
 
+                                            //  Analyze for glucose
                                             let results_dataset_glucose
                                             if(exception_sugar_status.length > 1){
                                                 results_dataset_glucose = filteredCalorieDaily.filter(item => 
                                                     exception_sugar_status.includes(item.sugar_status))
-                                                    .map(({ sodium, sodium_status, ...rest }) => rest)
+                                                    .map(({ sodium, sodium_status, saturated_fats, saturated_fats_status, ...rest }) => rest)
                                             } else {
                                                 results_dataset_glucose = filteredCalorieDaily
-                                                    .map(({ sodium, sodium_status, ...rest }) => rest)
+                                                    .map(({ sodium, sodium_status, saturated_fats, saturated_fats_status, ...rest }) => rest)
                                                     .sort((a, b) => b.sugar - a.sugar)
                                             }
 
+                                            // Analyze for gout
+                                            let results_dataset_gout
+                                            if(exception_saturated_fats_status.length > 1){
+                                                results_dataset_gout = filteredCalorieDaily.filter(item => 
+                                                exception_saturated_fats_status.includes(item.saturated_fats))
+                                                .map(({ sugar, sugar_status, carbohydrate, carbohydrate_status, dietary_fiber, dietary_fiber_status, sodium, sodium_status, ...rest }) => rest)
+                                            } else {
+                                                results_dataset_gout = filteredCalorieDaily
+                                                    .map(({ sugar, sugar_status, carbohydrate, carbohydrate_status, dietary_fiber, dietary_fiber_status, sodium, sodium_status, ...rest }) => rest)
+                                                    .sort((a, b) => b.saturated_fats - a.saturated_fats)
+                                            }
                                             // Suggestion from Consume History
                                             const results_personal = rows.map((dt, index) => ({
                                                 consume_name: dt.consume_name,
@@ -352,6 +398,8 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                                                     ${diastolic_status} for diastolic. ${param_sodium}`,
                                                 general_analyze_blood_glucose: results_dataset_glucose,
                                                 summary_analyze_blood_glucose: `Based on your glucose, we've got status ${glucose_status} for glucose. ${param_sugar}`,
+                                                general_analyze_gout: results_dataset_gout,
+                                                summary_analyze_gout: `Based on your gout, we've got status ${gout_status} for gout. ${param_saturated_fats}`,
                                                 personal_analyze: results_personal,
                                                 total_consumed_calorie: totalConsumedCalorie,
                                                 summary_all_calorie: totalConsumedCalorie > 0 ? `Cause today you have consume ${totalConsumedCalorie} calorie. We only show you the food that have calorie below that`:`Today you still achieve 0 calorie so you free to choose what food you want to consume`
