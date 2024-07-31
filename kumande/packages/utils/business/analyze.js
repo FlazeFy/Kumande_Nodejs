@@ -1,5 +1,3 @@
-
-
 const getStatusSodium = (val) => {
     let status = null
 
@@ -13,8 +11,26 @@ const getStatusSodium = (val) => {
         status = "Very Low"
     }
 
+    return status
+}
+
+const getStatusSugar = (val) => {
+    let status = null
+
+    if(val > 15){
+        status = "High"
+    } else if(val >= 5){
+        status = "Moderate"
+    } else if(val >= 2.6){
+        status = "Low"
+    } else {
+        status = "Very Low"
+    }
 
     return status
 }
 
-module.exports = getStatusSodium
+module.exports = {
+    getStatusSodium,
+    getStatusSugar
+}

@@ -5,7 +5,7 @@ const fs = require('fs')
 const csv = require('csv-parser')
 const { templateSelectObjectColumn } = require('../../../packages/helpers/template')
 const { calculateDistance } = require('../../../packages/helpers/ocnverter')
-const getStatusSodium = require('../../../packages/utils/business/analyze')
+const { getStatusSodium, getStatusSugar } = require('../../../packages/utils/business/analyze')
 
 function getAnalyzeConsume(req, res, userId, lat, long, date){
     // Query CSV
@@ -157,7 +157,7 @@ function getAnalyzeConsume(req, res, userId, lat, long, date){
     }
 }
 
-function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure){
+function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose){
     // Query CSV
     try {
         const csvFilePath = './docs/Kumande Asset - Food.csv'
@@ -196,16 +196,24 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure){
                     const diastolic_status = diastolic > 90 ? 'High' :
                         diastolic > 80 ? 'Pre-High' :
                         diastolic > 60 ? 'Normal' : 'Low'
+
+                    // Glucose Status : Fasting (Source : CDC)
+                    const glucose_status = blood_glucose >= 126 ? 'Diabetes' :
+                    blood_glucose >= 100 ? 'Prediabetes' :
+                    blood_glucose >= 70 ? 'Normal' :
+                        'Low'
                     
                     let cellFoodValues = []
                     let cellCalValues = []
                     let cellSodiumValues = []
+                    let cellSugarValues = []
 
                     fs.createReadStream(csvFilePath).pipe(csv())
                     .on('data', (row) => {
                         cellFoodValues.push(row['food'])
                         cellCalValues.push(row['calorie'])
                         cellSodiumValues.push(row['sodium'])
+                        cellSugarValues.push(row['sugar'])
                     })
                     .on('end', () => {
                         connection.query(sqlConsume, (err, rows, fields) => {
@@ -239,17 +247,42 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure){
                                             param_sodium = 'So you can consume whatever the sodium level is'
                                         }
 
+                                        // Sugar exception food
+                                        let exception_sugar_status = []
+                                        let param_sugar = ''
+                                        if(glucose_status == "High" || glucose_status == "Pre-High"){
+                                            exception_sugar_status = ['Very Low','Low']
+                                            param_sugar = 'We suggest you to consume food where the sugar is below 5 g mg per 100 g'
+                                        } else {
+                                            param_sugar = 'So you can consume whatever the sugar level is. We suggest you sometimes consume high value sugar to make sure your sugar level is not below the lowest parameter'
+                                        }
+
                                         // Suggestion from Dataset
-                                        const results_dataset_sodium = cellFoodValues.map((food, index) => ({
+                                        const filteredAllergic = cellFoodValues.map((food, index) => ({
                                             consume_name: food,
                                             calorie: parseInt(cellCalValues[index]),
                                             sodium: parseFloat(cellSodiumValues[index]),
-                                            sodium_status: getStatusSodium(parseFloat(cellSodiumValues[index]))
+                                            sodium_status: getStatusSodium(parseFloat(cellSodiumValues[index])),
+                                            sugar: parseFloat(cellSugarValues[index]),
+                                            sugar_status: getStatusSugar(parseFloat(cellSugarValues[index]))
                                         })).filter(item => 
-                                            !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt)) 
-                                            &&
-                                            exception_sodium_status.includes(item.sodium_status)
+                                            !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
                                         )
+
+                                        const results_dataset_blood_preasure = filteredAllergic.filter(item => 
+                                            exception_sodium_status.includes(item.sodium_status))
+                                            .map(({ sugar, sugar_status, ...rest }) => rest)
+
+                                        let results_dataset_glucose
+                                        if(exception_sugar_status.length > 1){
+                                            results_dataset_glucose = filteredAllergic.filter(item => 
+                                                exception_sugar_status.includes(item.sugar_status))
+                                                .map(({ sodium, sodium_status, ...rest }) => rest)
+                                        } else {
+                                            results_dataset_glucose = filteredAllergic
+                                                .map(({ sodium, sodium_status, ...rest }) => rest)
+                                                .sort((a, b) => b.sugar - a.sugar)
+                                        }
 
                                         // Suggestion from Consume History
                                         const results_personal = rows.map((dt, index) => ({
@@ -259,19 +292,22 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure){
                                             !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
                                         )
 
-                                        if (rows.length == 0 && results_dataset_sodium.length == 0){
+                                        if (rows.length == 0 && results_dataset_blood_preasure.length == 0){
                                             code = 404
                                         }
 
+                                        // Final Response
                                         res.status(code).json({ 
                                             message: generateQueryMsg(baseTable, rows.length), 
                                             status: code, 
-                                            general_analyze_sodium: results_dataset_sodium,
+                                            general_analyze_blood_preasure: results_dataset_blood_preasure,
                                             summary_analyze_blood_preasure: `Based on your blood preasure, we've got status ${systolic_status} for systolic and 
                                                 ${diastolic_status} for diastolic. ${param_sodium}`,
+                                            general_analyze_blood_glucose: results_dataset_glucose,
+                                            summary_analyze_blood_glucose: `Based on your glucose, we've got status ${glucose_status} for glucose. ${param_sugar}`,
                                             personal_analyze: results_personal,
                                         })
-                                    }
+                                    } 
                                 })
                             }
                         })
