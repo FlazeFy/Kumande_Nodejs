@@ -157,12 +157,12 @@ function getAnalyzeConsume(req, res, userId, lat, long, date){
     }
 }
 
-function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose){
+function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose, calorieDaily, weight, height, date){
     // Query CSV
     try {
         const csvFilePath = './docs/Kumande Asset - Food.csv'
 
-        const sqlCheckUser = `SELECT 1 FROM user WHERE id = '${userId}' LIMIT 1`
+        const sqlCheckUser = `SELECT gender FROM user WHERE id = '${userId}' LIMIT 1`
 
         connection.query(sqlCheckUser, (err, check, fields) => {
             if (err) {
@@ -182,6 +182,26 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                         FROM allergic
                         WHERE created_by = '${userId}'
                     `
+
+                    const sqlConsumeCal = `SELECT SUM(CAST(REPLACE(JSON_EXTRACT(consume_detail, '$[0].calorie'), '\"', '') AS UNSIGNED)) as total_calorie
+                        FROM ${baseTable}
+                        WHERE DATE(created_at) = '${date}' 
+                        AND created_by = '${userId}'
+                    `
+
+                    // BMI Status (Source : CDC)
+                    const gender = check[0].gender
+                    let bmi
+                    if(gender == 'male'){
+                        bmi = weight / ((height / 100) * (height / 100))
+                    } else if(gender == 'female'){
+                        bmi = weight / ((height / 100) * (height / 100))
+                    }
+
+                    const bmi_status = bmi >= 30.0 ? 'Obesity' : 
+                        bmi >= 25.0 ? 'Overweight':
+                        bmi >= 18.5 ? 'Healthy Weight':
+                            'Underweight'
 
                     // Blood Preasure (Source : https://www.health.harvard.edu/heart-health/reading-the-new-blood-pressure-guidelines)
                     // Get blood preasure status
@@ -226,88 +246,118 @@ function getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood
                                 let code = 200
 
                                 connection.query(sqlAllergic, (err, allergic, fields) => {
-                                    if (err) {
-                                        res.status(500).send({
-                                            message: 'Internal server error',
-                                            status: 'failed'
-                                        });
-                                    } else {
-                                        // Allergic List
-                                        const allergicContext = allergic.flatMap(entry => 
-                                            entry.allergic_context.split(',').map(dt => dt.trim().toLowerCase())
-                                        );
-
-                                        // Sodium exception food
-                                        let exception_sodium_status = []
-                                        let param_sodium = ''
-                                        if(systolic_status == "High" || systolic_status == "Pre-High"){
-                                            exception_sodium_status = ['Very Low','Low']
-                                            param_sodium = 'We suggest you to consume food where the sodium is below 0.14 g mg per 100 g'
+                                    connection.query(sqlConsumeCal, (errCal, consumeCal, fields) => {
+                                        if (err) {
+                                            res.status(500).send({
+                                                message: 'Internal server error',
+                                                status: 'failed'
+                                            });
                                         } else {
-                                            param_sodium = 'So you can consume whatever the sodium level is'
-                                        }
+                                            // Allergic List
+                                            const allergicContext = allergic.flatMap(entry => 
+                                                entry.allergic_context.split(',').map(dt => dt.trim().toLowerCase())
+                                            );
 
-                                        // Sugar exception food
-                                        let exception_sugar_status = []
-                                        let param_sugar = ''
-                                        if(glucose_status == "High" || glucose_status == "Pre-High"){
-                                            exception_sugar_status = ['Very Low','Low']
-                                            param_sugar = 'We suggest you to consume food where the sugar is below 5 g mg per 100 g'
-                                        } else {
-                                            param_sugar = 'So you can consume whatever the sugar level is. We suggest you sometimes consume high value sugar to make sure your sugar level is not below the lowest parameter'
-                                        }
+                                            // Total Daily Calorie
+                                            let totalConsumedCalorie = 0
+                                            if(consumeCal){
+                                                totalConsumedCalorie = consumeCal[0].total_calorie
+                                            } 
 
-                                        // Suggestion from Dataset
-                                        const filteredAllergic = cellFoodValues.map((food, index) => ({
-                                            consume_name: food,
-                                            calorie: parseInt(cellCalValues[index]),
-                                            sodium: parseFloat(cellSodiumValues[index]),
-                                            sodium_status: getStatusSodium(parseFloat(cellSodiumValues[index])),
-                                            sugar: parseFloat(cellSugarValues[index]),
-                                            sugar_status: getStatusSugar(parseFloat(cellSugarValues[index]))
-                                        })).filter(item => 
-                                            !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
-                                        )
+                                            // Sodium exception food
+                                            let exception_sodium_status = []
+                                            let param_sodium = ''
+                                            if(systolic_status == "High" || systolic_status == "Pre-High"){
+                                                exception_sodium_status = ['Very Low','Low']
+                                                param_sodium = 'We suggest you to consume food where the sodium is below 0.14 g mg per 100 g'
+                                            } else {
+                                                param_sodium = 'So you can consume whatever the sodium level is'
+                                            }
 
-                                        const results_dataset_blood_preasure = filteredAllergic.filter(item => 
-                                            exception_sodium_status.includes(item.sodium_status))
-                                            .map(({ sugar, sugar_status, ...rest }) => rest)
+                                            // Sugar exception food
+                                            let exception_sugar_status = []
+                                            let param_sugar = ''
+                                            if(glucose_status == "High" || glucose_status == "Pre-High"){
+                                                exception_sugar_status = ['Very Low','Low']
+                                                param_sugar = 'We suggest you to consume food where the sugar is below 5 g mg per 100 g'
+                                            } else {
+                                                param_sugar = 'So you can consume whatever the sugar level is. We suggest you sometimes consume high value sugar to make sure your sugar level is not below the lowest parameter'
+                                            }
 
-                                        let results_dataset_glucose
-                                        if(exception_sugar_status.length > 1){
-                                            results_dataset_glucose = filteredAllergic.filter(item => 
-                                                exception_sugar_status.includes(item.sugar_status))
-                                                .map(({ sodium, sodium_status, ...rest }) => rest)
-                                        } else {
-                                            results_dataset_glucose = filteredAllergic
-                                                .map(({ sodium, sodium_status, ...rest }) => rest)
-                                                .sort((a, b) => b.sugar - a.sugar)
-                                        }
+                                            // Food allowed passed calorie based on BMI status
+                                            let is_calorie_over
+                                            if(bmi_status == 'Overweight' || bmi_status == 'Obesity'){
+                                                is_calorie_over = false
+                                            } else if(bmi_status == 'Healthy Weight' || bmi_status == 'Underweight'){
+                                                is_calorie_over = true
+                                            }
 
-                                        // Suggestion from Consume History
-                                        const results_personal = rows.map((dt, index) => ({
-                                            consume_name: dt.consume_name,
-                                            calorie: dt.calorie
-                                        })).filter(item => 
-                                            !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
-                                        )
+                                            // Suggestion from Dataset
+                                            let filteredAllergic = cellFoodValues.map((food, index) => ({
+                                                consume_name: food,
+                                                calorie: parseInt(cellCalValues[index]),
+                                                sodium: parseFloat(cellSodiumValues[index]),
+                                                sodium_status: getStatusSodium(parseFloat(cellSodiumValues[index])),
+                                                sugar: parseFloat(cellSugarValues[index]),
+                                                sugar_status: getStatusSugar(parseFloat(cellSugarValues[index]))
+                                            })).filter(item => 
+                                                !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
+                                            )
 
-                                        if (rows.length == 0 && results_dataset_blood_preasure.length == 0){
-                                            code = 404
-                                        }
+                                            let filteredCalorie = filteredAllergic
+                                            
+                                            if(is_calorie_over){
+                                                filteredCalorie = filteredCalorie.sort((a, b) => b.calorie - a.calorie)
+                                            } else {
+                                                filteredCalorie = filteredCalorie.filter(item => 
+                                                    item.calorie < calorieDaily)
+                                            }
 
-                                        // Final Response
-                                        res.status(code).json({ 
-                                            message: generateQueryMsg(baseTable, rows.length), 
-                                            status: code, 
-                                            general_analyze_blood_preasure: results_dataset_blood_preasure,
-                                            summary_analyze_blood_preasure: `Based on your blood preasure, we've got status ${systolic_status} for systolic and 
-                                                ${diastolic_status} for diastolic. ${param_sodium}`,
-                                            general_analyze_blood_glucose: results_dataset_glucose,
-                                            summary_analyze_blood_glucose: `Based on your glucose, we've got status ${glucose_status} for glucose. ${param_sugar}`,
-                                            personal_analyze: results_personal,
-                                        })
-                                    } 
+                                            let filteredCalorieDaily = filteredCalorie.filter(item => 
+                                                    item.calorie < (calorieDaily - totalConsumedCalorie))
+
+                                            const results_dataset_blood_preasure = filteredCalorieDaily.filter(item => 
+                                                exception_sodium_status.includes(item.sodium_status))
+                                                .map(({ sugar, sugar_status, ...rest }) => rest)
+
+                                            let results_dataset_glucose
+                                            if(exception_sugar_status.length > 1){
+                                                results_dataset_glucose = filteredCalorieDaily.filter(item => 
+                                                    exception_sugar_status.includes(item.sugar_status))
+                                                    .map(({ sodium, sodium_status, ...rest }) => rest)
+                                            } else {
+                                                results_dataset_glucose = filteredCalorieDaily
+                                                    .map(({ sodium, sodium_status, ...rest }) => rest)
+                                                    .sort((a, b) => b.sugar - a.sugar)
+                                            }
+
+                                            // Suggestion from Consume History
+                                            const results_personal = rows.map((dt, index) => ({
+                                                consume_name: dt.consume_name,
+                                                calorie: dt.calorie
+                                            })).filter(item => 
+                                                !allergicContext.some(dt => item.consume_name.toLowerCase().includes(dt))
+                                            )
+
+                                            if (rows.length == 0 && results_dataset_blood_preasure.length == 0){
+                                                code = 404
+                                            }
+
+                                            // Final Response
+                                            res.status(code).json({ 
+                                                message: generateQueryMsg(baseTable, rows.length), 
+                                                status: code, 
+                                                general_analyze_blood_preasure: results_dataset_blood_preasure,
+                                                summary_analyze_blood_preasure: `Based on your blood preasure, we've got status ${systolic_status} for systolic and 
+                                                    ${diastolic_status} for diastolic. ${param_sodium}`,
+                                                general_analyze_blood_glucose: results_dataset_glucose,
+                                                summary_analyze_blood_glucose: `Based on your glucose, we've got status ${glucose_status} for glucose. ${param_sugar}`,
+                                                personal_analyze: results_personal,
+                                                total_consumed_calorie: totalConsumedCalorie,
+                                                summary_all_calorie: totalConsumedCalorie > 0 ? `Cause today you have consume ${totalConsumedCalorie} calorie. We only show you the food that have calorie below that`:`Today you still achieve 0 calorie so you free to choose what food you want to consume`
+                                            })
+                                        } 
+                                    })
                                 })
                             }
                         })

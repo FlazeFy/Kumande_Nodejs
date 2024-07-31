@@ -54,8 +54,12 @@ router.post('/api/v1/analyze/consume_data/consume_body_relation', (req, res) => 
     const userId = req.headers['x-custom-header']
     const blood_pressure = req.body.blood_pressure
     const blood_glucose = req.body.blood_glucose
+    const calorie = req.body.calorie
+    const weight = req.body.weight
+    const height = req.body.height
+    const date = req.body.date
 
-    repoQueryAnalyze.getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose)
+    repoQueryAnalyze.getAnalyzeConsumeMyBodyRelation(req, res, userId, blood_pressure, blood_glucose, calorie, weight, height, date)
 })
 
 module.exports = router
