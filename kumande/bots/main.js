@@ -17,6 +17,7 @@ const { convertDateTime, decodeQRCode } = require('../packages/helpers/ocnverter
 const { analyzePhoto } = require('./image_processing/load');
 const { ai_command } = require('./ai');
 const { text } = require('stream/consumers');
+const { analyzePDFText } = require('./doc_processing/text');
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -279,7 +280,57 @@ bot.on('message', async (ctx) => {
                 fs.unlinkSync(photoPath)
             }
         }
-    }
+    } else if(ctx.message.document){
+        try {
+            const fileId = ctx.message.document.file_id
+            const fileInfo = await ctx.telegram.getFile(fileId)
+            const fileLink = await ctx.telegram.getFileLink(fileId)
+            const allowedType = ['application/pdf']
+            const allowedSize = 5 * 1024 * 1024
+
+            if (!allowedType.includes(ctx.message.document.mime_type)) {
+                await ctx.reply('Document Analyze : File Type Invalid. Should be pdf')
+            } else {
+                if(fileInfo.file_size > allowedSize){
+                    await ctx.reply('Document Analyze : File Size Invalid. Should be less than 5 mb')
+                } else {
+                    await ctx.reply('Document Analyze : File Type & Size Valid!')
+
+                    const search_my_schedule_marks = ['My Schedule','Time / Day','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday','Breakfast','Lunch','Dinner']
+                    const is_valid_my_schedule = await analyzePDFText(fileLink.href, search_my_schedule_marks)
+                    if(is_valid_my_schedule.result){
+                        await ctx.reply('Document Analyze : My Schedule document detected')
+
+                        // Remove marks from all text detected
+                        let allText = is_valid_my_schedule.allText
+                        search_my_schedule_marks.forEach(dt => {
+                            const regex = new RegExp(dt, 'g')
+                            allText = allText.replace(regex, '')
+                        })
+                        allText = allText.replace(/-{2,}/g, ' ').trim()
+
+                        // Filter out consume
+                        const parts = allText.split(/(?=#)/).filter(part => part.trim().startsWith('#'))
+                        const consumes = parts.map(part => part.replace(/^#/, '').trim().replace('-',''))
+                        let consumeList = ''
+                        if(consumes.length > 0){
+                            consumeList += `We found ${consumes.length} consume. Here's the list:\n\n`
+                            consumes.forEach((dt, idx)=>{
+                                consumeList += `- ${dt}\n`
+                            })
+                        } else {
+                            consumeList += 'No Consume Detected'
+                        }
+                        await ctx.reply(`Document Analyze : ${consumeList}`)
+                    } else {
+                        await ctx.reply('Document Analyze : Unknown document')
+                    }
+                } 
+            }
+        } catch (error) {
+            await ctx.reply(`Failed to analyze the document: ${error.message}`)
+        }
+    } 
 });
 
 bot.launch().then(() => {

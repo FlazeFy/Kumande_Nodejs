@@ -28,6 +28,7 @@
     "natural": "^7.1.0",
     "npm": "^10.8.2",
     "or": "^0.2.0",
+    "pdf-parse": "^1.1.1",
     "puppeteer": "^22.10.0",
     "qrcode": "^1.5.3",
     "qrcode-reader": "^1.0.4",

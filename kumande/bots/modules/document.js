@@ -95,16 +95,24 @@ async function handleMySchedule() {
         }
 
         time.forEach((t, i) => {
+            const findMon = findInSchedule('Mon', t)
+            const findTue = findInSchedule('Tue', t)
+            const findWed = findInSchedule('Wed', t)
+            const findThu = findInSchedule('Thu', t)
+            const findFri = findInSchedule('Fri', t)
+            const findSat = findInSchedule('Sat', t)
+            const findSun = findInSchedule('Sun', t)
+            
             body += `
                 <tr>
                     <td style='font-weight: 600;'>${t}</td>
-                    <td>${findInSchedule('Mon', t)}</td>
-                    <td>${findInSchedule('Tue', t)}</td>
-                    <td>${findInSchedule('Wed', t)}</td>
-                    <td>${findInSchedule('Thu', t)}</td>
-                    <td>${findInSchedule('Fri', t)}</td>
-                    <td>${findInSchedule('Sat', t)}</td>
-                    <td>${findInSchedule('Sun', t)}</td>
+                    <td>${findMon == '-' ? '-' : `#${findMon}`}</td>
+                    <td>${findTue == '-' ? '-' : `#${findTue}`}</td>
+                    <td>${findWed == '-' ? '-' : `#${findWed}`}</td>
+                    <td>${findThu == '-' ? '-' : `#${findThu}`}</td>
+                    <td>${findFri == '-' ? '-' : `#${findFri}`}</td>
+                    <td>${findSat == '-' ? '-' : `#${findSat}`}</td>
+                    <td>${findSun == '-' ? '-' : `#${findSun}`}</td>
                 </tr>
             `
         })
