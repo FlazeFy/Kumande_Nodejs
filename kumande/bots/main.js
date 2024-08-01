@@ -18,6 +18,7 @@ const { analyzePhoto } = require('./image_processing/load');
 const { ai_command } = require('./ai');
 const { text } = require('stream/consumers');
 const { analyzePDFText } = require('./doc_processing/text');
+const { add_firestore } = require('./modules/analyze');
 
 const bot = new Telegraf(conf.TOKEN)
 
@@ -78,6 +79,16 @@ bot.on('message', async (ctx) => {
 
     if (ctx.message.text) {
         const message = ctx.message.text
+        
+        if(message[0] == "/"){
+            const accId = null
+            const data = {
+                telegram_id:telegramId,
+                kumande_user_id:accId,
+                message:message
+            } 
+            await add_firestore(data, 'called_menu')
+        }
 
         if (menuWelcome.includes(message)) {
             switch (message) {

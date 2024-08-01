@@ -1,6 +1,6 @@
 // Test Case ID : TC-S002
 // Related FR : ...
-// Modules : Schedyle
+// Modules : Schedule
 
 // Components
 import '../../packages/builders/test'

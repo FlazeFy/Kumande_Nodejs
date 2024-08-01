@@ -2,7 +2,9 @@ const natural = require('natural');
 const { handleAllConsume, handleMySchedule } = require('./modules/document');
 const tokenizer = new natural.WordTokenizer()
 const sentiment = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn')
-const fs = require('fs')
+const fs = require('fs');
+const { add_firestore } = require('./modules/analyze');
+const { getSession } = require('../packages/helpers/session')
 
 const ai_command = async (text,ctx) => {
     const tokens = tokenizer.tokenize(text.toLowerCase())    
@@ -68,6 +70,17 @@ const ai_command = async (text,ctx) => {
             });
         } 
     } else {
+        const teleId = ctx.from.id
+        // const accId = getSession('kumande_user_id')
+        const accId = null
+        const msg = text.toLowerCase()
+        const data = {
+            telegram_id:teleId,
+            kumande_user_id:accId,
+            message:msg
+        } 
+
+        await add_firestore(data, 'undefined_chat')
         ctx.replyWithSticker('CAACAgIAAxkBAAEszPxmohzlh6499jHZKtS-wet8ozd_SgACUQMAArVx2gat6tu-HeOH2zUE')
         ctx.reply(`Sorry i dont understand your message`)
     }
